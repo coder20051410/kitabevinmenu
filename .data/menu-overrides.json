@@ -1,0 +1,151 @@
+{
+  "burgers": {
+    "items": {
+      "Cheeseburger ət + kartof fri": {
+        "image": "/images/menu/1788483957279-1788482475535-sucuklu-32sm.jpg"
+      }
+    }
+  },
+  "kebab-doner": {
+    "items": {
+      "İskəndər": {
+        "image": "/images/menu/kebab-doner-iskender.jpg"
+      }
+    }
+  },
+  "pide": {
+    "items": {
+      "Pendirli": {
+        "image": "/images/menu/pide-pendirli.jpg"
+      },
+      "Qarışıq": {
+        "image": "/images/menu/pide-qarisiq.jpg"
+      },
+      "Qiyməli": {
+        "image": "/images/menu/pide-qiymeli.jpg"
+      }
+    }
+  },
+  "lahmacun": {
+    "items": {
+      "Acılı": {
+        "image": "/images/menu/lahmacun-acili.jpg"
+      }
+    }
+  },
+  "pizza": {
+    "items": {
+      "Margarita 32sm": {
+        "image": "/images/menu/pizza-margarita-32sm.jpg"
+      },
+      "Toyuqlu 32sm": {
+        "image": "/images/menu/pizza-toyuqlu-32sm.jpg"
+      },
+      "Sucuklu 32sm": {
+        "image": "/images/menu/1788483756276-1788481805738-sucuklu-32sm.jpg"
+      },
+      "BBQ toyuqlu 32sm": {
+        "image": "/images/menu/pizza-bbq-toyuqlu-32sm.jpg"
+      },
+      "Sezar 32sm": {
+        "image": "/images/menu/1788483764596-1788482492652-sezar-32sm.jpg"
+      },
+      "Qarışıq 32sm": {
+        "image": "/images/menu/1788483772351-1788482556651-qar-s-q-32sm.jpg"
+      }
+    }
+  },
+  "salads": {
+    "items": {
+      "Sezar": {
+        "image": "/images/menu/salads-sezar.jpg"
+      },
+      "Tuna": {
+        "image": "/images/menu/salads-tuna.jpg"
+      },
+      "Paytaxt": {
+        "image": "/images/menu/salads-paytaxt.jpg"
+      },
+      "Bakı": {
+        "image": "/images/menu/salads-baki.jpg"
+      }
+    }
+  },
+  "soups": {
+    "items": {
+      "Tomat şorbası": {
+        "image": "/images/menu/soups-tomat-sorbasi.jpg"
+      },
+      "Toyuq şorbası": {
+        "image": "/images/menu/soups-toyuq-sorbasi.jpg"
+      }
+    }
+  },
+  "breakfast": {
+    "items": {
+      "Pomidor yumurta": {
+        "image": "/images/menu/breakfast-pomidor-yumurta.jpg"
+      },
+      "Sucuklu yumurta": {
+        "image": "/images/menu/breakfast-sucuklu-yumurta.jpg"
+      }
+    }
+  },
+  "cold-coffee": {
+    "items": {
+      "Ice Americano": {
+        "image": "/images/menu/cold-coffee-ice-americano.jpg"
+      },
+      "Ice Oreo Latte": {
+        "image": "/images/menu/cold-coffee-ice-oreo-latte.jpg"
+      },
+      "Ice Raff": {
+        "image": "/images/menu/cold-coffee-ice-raff.jpg"
+      },
+      "Ice White Mocha": {
+        "image": "/images/menu/cold-coffee-ice-white-mocha.jpg"
+      },
+      "Till The End": {
+        "image": "/images/menu/cold-coffee-till-the-end.jpg"
+      },
+      "Extra Syrup": {
+        "image": "/images/menu/cold-coffee-extra-syrup.jpg"
+      }
+    }
+  },
+  "hot-coffee": {
+    "items": {
+      "Espresso Single 30ml": {
+        "image": "/images/menu/hot-coffee-espresso-single-30ml.jpg"
+      },
+      "Lungo": {
+        "image": "/images/menu/hot-coffee-lungo.jpg"
+      },
+      "Latte": {
+        "image": "/images/menu/hot-coffee-latte.jpg"
+      },
+      "Spanish Latte": {
+        "image": "/images/menu/hot-coffee-spanish-latte.jpg"
+      },
+      "Raff": {
+        "image": "/images/menu/hot-coffee-raff.jpg"
+      },
+      "Flat White": {
+        "image": "/images/menu/hot-coffee-flat-white.jpg"
+      },
+      "Mocha": {
+        "image": "/images/menu/hot-coffee-mocha.jpg"
+      },
+      "Türk qəhvəsi": {
+        "image": "/images/menu/hot-coffee-turk-qehvesi.jpg"
+      }
+    }
+  },
+  "cold-drinks": {
+    "items": {
+      "Sprite 330ml": {
+        "image": "/images/menu/cold-drinks-sprite-330ml.jpg"
+      }
+    }
+  }
+}

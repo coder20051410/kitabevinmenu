@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper text-coffee font-sans antialiased;
+    background-image: radial-gradient(rgba(59, 42, 30, 0.035) 0.7px, transparent 0.7px);
+    background-size: 7px 7px;
+  }
+
+  ::selection {
+    @apply bg-accent/20 text-coffee;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active,
+  a:active {
+    transform: scale(0.98);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

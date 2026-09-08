@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -25,33 +24,12 @@ interface CartContextValue {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
-  tableNumber: string;
-  setTableNumber: (value: string, fromQR?: boolean) => void;
-  tableFromQR: boolean;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [tableNumber, setTableNumber] = useState("");
-  const [tableFromQR, setTableFromQR] = useState(false);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem("tableNumber");
-    const fromQR = sessionStorage.getItem("tableFromQR") === "true";
-    if (saved) {
-      setTableNumber(saved);
-      setTableFromQR(fromQR);
-    }
-  }, []);
-
-  const setTable = (value: string, fromQR = false) => {
-    setTableNumber(value);
-    setTableFromQR(fromQR);
-    sessionStorage.setItem("tableNumber", value);
-    sessionStorage.setItem("tableFromQR", String(fromQR));
-  };
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -105,9 +83,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
-        tableNumber,
-        setTableNumber: setTable,
-        tableFromQR,
       }}
     >
       {children}

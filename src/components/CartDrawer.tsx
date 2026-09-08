@@ -6,6 +6,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { siteConfig } from "@/lib/site";
 import { formatPrice } from "@/lib/utils";
+import { useState } from "react";
 
 interface CartDrawerProps {
   open: boolean;
@@ -14,7 +15,8 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { t } = useLanguage();
-  const { items, updateQuantity, removeItem, totalPrice, clearCart, tableNumber, setTableNumber, tableFromQR } = useCart();
+  const { items, updateQuantity, removeItem, totalPrice, clearCart } = useCart();
+  const [tableNumber, setTableNumber] = useState("");
 
   const buildWhatsAppUrl = () => {
     const lines = items.map(
@@ -129,20 +131,14 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                     <label className="mb-1.5 block text-xs font-medium text-coffee-muted">
                       {t.tableNumber}
                     </label>
-                    {tableFromQR ? (
-                      <div className="flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 px-4 py-2.5 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
-                        ✓ Masa {tableNumber} təsdiqləndi
-                      </div>
-                    ) : (
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={tableNumber}
-                        onChange={(e) => setTableNumber(e.target.value)}
-                        placeholder={t.tablePlaceholder}
-                        className="w-full rounded-xl border border-card-border bg-card px-4 py-2.5 text-sm outline-none focus:border-accent/40 dark:border-dark-border dark:bg-dark-card dark:text-dark-text"
-                      />
-                    )}
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      placeholder={t.tablePlaceholder}
+                      className="w-full rounded-xl border border-card-border bg-card px-4 py-2.5 text-sm outline-none focus:border-accent/40 dark:border-dark-border dark:bg-dark-card dark:text-dark-text"
+                    />
                   </div>
 
                   <a

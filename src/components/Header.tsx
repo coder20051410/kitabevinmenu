@@ -4,17 +4,15 @@ import Image from "next/image";
 import { localeLabels, locales, type Locale } from "@/lib/i18n";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Moon, Sun, Wifi, Calendar } from "lucide-react";
+import { Moon, Sun, Wifi } from "lucide-react";
 import { useState, useEffect } from "react";
 import WiFiModal from "./WiFiModal";
-import ReservationModal from "./ReservationModal";
 import { siteConfig } from "@/lib/site";
 
 export default function Header() {
   const { locale, setLocale } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [wifiOpen, setWifiOpen] = useState(false);
-  const [reservationOpen, setReservationOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -103,14 +101,6 @@ export default function Header() {
             >
               <Wifi className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
-            <button
-              type="button"
-              onClick={() => setReservationOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-card-border bg-card text-coffee transition-colors hover:border-accent/30 hover:bg-paper-light active:scale-95 dark:border-dark-border dark:bg-dark-card dark:text-dark-text"
-              aria-label="Make reservation"
-            >
-              <Calendar className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
 
             <button
               type="button"
@@ -137,7 +127,6 @@ export default function Header() {
         </div>
       </header>
       <WiFiModal open={wifiOpen} onClose={() => setWifiOpen(false)} />
-      <ReservationModal open={reservationOpen} onClose={() => setReservationOpen(false)} />
     </>
   );
 }

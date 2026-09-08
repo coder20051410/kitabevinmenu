@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { menuCategories as defaultMenuCategories, type MenuCategory } from "@/data/menu";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -14,12 +14,10 @@ import MenuItemCard from "./MenuItemCard";
 import Footer from "./Footer";
 import FilterChips, { type FilterKey } from "./FilterChips";
 import Gallery from "./Gallery";
+import TimeBanner from "./TimeBanner";
+import TableNumberHandler from "./TableNumberHandler";
 
 const Header = dynamic(() => import("./Header"), {
-  ssr: false,
-});
-
-const TimeBanner = dynamic(() => import("./TimeBanner"), {
   ssr: false,
 });
 
@@ -43,7 +41,15 @@ export default function MenuPage() {
   const debouncedQuery = useDebouncedValue(searchQuery, 200);
   const [activeCategory, setActiveCategory] = useState(defaultMenuCategories[0].id);
   const [venueImages, setVenueImages] = useState<{ hero?: string; gallery: string[] }>({ gallery: [] });
+  const [tempPriority, setTempPriority] = useState<string[]>([]);
   const isScrollingRef = useRef(false);
+
+  useEffect(() => {
+    fetch("/api/weather")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.priority) setTempPriority(data.priority); })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/menu?updated=${Date.now()}`, { cache: "no-store" })
@@ -61,10 +67,20 @@ export default function MenuPage() {
       .catch(() => undefined);
   }, []);
 
+  const sortedCategories = useMemo(() => {
+    if (!tempPriority.length) return menuCategories;
+    const priority = new Map(tempPriority.map((id, i) => [id, i]));
+    return [...menuCategories].sort((a, b) => {
+      const pa = priority.has(a.id) ? priority.get(a.id)! : 999;
+      const pb = priority.has(b.id) ? priority.get(b.id)! : 999;
+      return pa - pb;
+    });
+  }, [menuCategories, tempPriority]);
+
   const filteredCategories = useMemo((): MenuCategory[] => {
     const query = debouncedQuery.trim().toLowerCase();
 
-    return menuCategories
+    return sortedCategories
       .map((category) => {
         let items = category.items;
 
@@ -94,7 +110,7 @@ export default function MenuPage() {
         return { ...category, items };
       })
       .filter((category) => category.items.length > 0);
-  }, [menuCategories, debouncedQuery, activeFilter, showFavoritesOnly, favorites]);
+  }, [sortedCategories, debouncedQuery, activeFilter, showFavoritesOnly, favorites]);
 
   const isSearching = debouncedQuery.trim().length > 0 || activeFilter !== null || showFavoritesOnly;
   const totalResults = filteredCategories.reduce(
@@ -119,7 +135,7 @@ export default function MenuPage() {
   useEffect(() => {
     if (isSearching) return;
 
-    const sections = menuCategories
+    const sections = sortedCategories
       .map((category) => document.getElementById(category.id))
       .filter((section): section is HTMLElement => section !== null);
 
@@ -146,10 +162,13 @@ export default function MenuPage() {
     sections.forEach((section) => observer.observe(section));
 
     return () => observer.disconnect();
-  }, [isSearching, menuCategories]);
+  }, [isSearching, sortedCategories]);
 
   return (
     <div className="min-h-screen">
+      <Suspense fallback={null}>
+        <TableNumberHandler />
+      </Suspense>
       <Header />
       <Hero image={venueImages.hero} />
       <Gallery images={venueImages.gallery} />
@@ -160,7 +179,7 @@ export default function MenuPage() {
         onFilterChange={setActiveFilter}
       />
       <CategoryNav
-        categories={menuCategories}
+        categories={sortedCategories}
         activeCategory={activeCategory}
         onCategoryClick={handleCategoryClick}
         isSearching={isSearching}
@@ -195,7 +214,7 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="space-y-10 sm:space-y-12">
-            {menuCategories.map((category) => (
+            {sortedCategories.map((category) => (
               <MenuSection key={category.id} category={category} />
             ))}
           </div>

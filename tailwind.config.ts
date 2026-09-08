@@ -29,6 +29,10 @@ const config: Config = {
           DEFAULT: "#FFFCF7",
           border: "#E8DFD0",
         },
+        "dark-bg": "#1a1a1a",
+        "dark-card": "#2a2a2a",
+        "dark-border": "#3a3a3a",
+        "dark-text": "#e5e5e5",
       },
       fontFamily: {
         display: ["var(--font-playfair)", "Georgia", "serif"],

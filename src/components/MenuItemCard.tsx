@@ -58,7 +58,7 @@ export default function MenuItemCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-20px" }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.2) }}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-card-border bg-card shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-card-hover dark:border-dark-border dark:bg-dark-card"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-card-border bg-card shadow-card transition-all hover:-translate-y-1 hover:border-accent/25 hover:shadow-card-hover dark:border-dark-border dark:bg-dark-card dark:shadow-card-dark hover:dark:shadow-card-dark-hover"
     >
       <div className="relative">
         <MenuItemImage

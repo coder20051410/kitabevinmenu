@@ -6,6 +6,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Moon, Sun, Wifi } from "lucide-react";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import WiFiModal from "./WiFiModal";
 import { siteConfig } from "@/lib/site";
 
@@ -104,15 +105,21 @@ export default function Header() {
 
             <button
               type="button"
-              onClick={toggleTheme}
+              onClick={(e) => toggleTheme(e)}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-card-border bg-card text-coffee transition-colors hover:border-accent/30 hover:bg-paper-light active:scale-95 dark:border-dark-border dark:bg-dark-card dark:text-dark-text"
               aria-label="Toggle theme"
             >
-              {theme === "light" ? (
-                <Moon className="h-3.5 w-3.5" strokeWidth={2} />
-              ) : (
-                <Sun className="h-3.5 w-3.5" strokeWidth={2} />
-              )}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={theme}
+                  initial={{ rotate: -90, scale: 0, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  exit={{ rotate: 90, scale: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  {theme === "dark" ? <Moon className="h-3.5 w-3.5" strokeWidth={2} /> : <Sun className="h-3.5 w-3.5" strokeWidth={2} />}
+                </motion.span>
+              </AnimatePresence>
             </button>
 
             <button

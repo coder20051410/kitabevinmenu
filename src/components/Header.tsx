@@ -69,7 +69,7 @@ export default function Header() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                 )}
               </span>
-              {isOpen ? "Açığıq" : "Bağlıyıq"}
+              {isOpen ? "Açıqdır" : "Bağlıyıq"}
             </span>
           </div>
 

@@ -1,10 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { menuCategories as defaultMenuCategories, type MenuCategory } from "@/data/menu";
 import { useLanguage } from "@/context/LanguageContext";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useCart } from "@/context/CartContext";
 import { slugify } from "@/lib/images";
 import Hero from "./Hero";
 import SearchBar from "./SearchBar";
@@ -34,12 +36,15 @@ function useDebouncedValue<T>(value: T, delay: number): T {
 export default function MenuPage() {
   const { t } = useLanguage();
   const { favorites, showFavoritesOnly } = useFavorites();
+  const { setTableNumber } = useCart();
+  const searchParams = useSearchParams();
   const [menuCategories, setMenuCategories] = useState<MenuCategory[]>(defaultMenuCategories);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>(null);
   const debouncedQuery = useDebouncedValue(searchQuery, 200);
   const [activeCategory, setActiveCategory] = useState(defaultMenuCategories[0].id);
   const [venueImages, setVenueImages] = useState<{ hero?: string; gallery: string[] }>({ gallery: [] });
+  const [tempPriority, setTempPriority] = useState<string[]>([]);
   const isScrollingRef = useRef(false);
 
   useEffect(() => {
@@ -58,10 +63,34 @@ export default function MenuPage() {
       .catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    const tableFromUrl = searchParams.get("masa") ?? searchParams.get("table") ?? "";
+    if (tableFromUrl) {
+      setTableNumber(tableFromUrl);
+    }
+  }, [searchParams, setTableNumber]);
+
+  useEffect(() => {
+    fetch("/api/weather")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.priority) setTempPriority(data.priority); })
+      .catch(() => undefined);
+  }, []);
+
+  const sortedCategories = useMemo(() => {
+    if (!tempPriority.length) return menuCategories;
+    const priority = new Map(tempPriority.map((id, i) => [id, i]));
+    return [...menuCategories].sort((a, b) => {
+      const pa = priority.has(a.id) ? priority.get(a.id)! : 999;
+      const pb = priority.has(b.id) ? priority.get(b.id)! : 999;
+      return pa - pb;
+    });
+  }, [menuCategories, tempPriority]);
+
   const filteredCategories = useMemo((): MenuCategory[] => {
     const query = debouncedQuery.trim().toLowerCase();
 
-    return menuCategories
+    return sortedCategories
       .map((category) => {
         let items = category.items;
 
@@ -91,7 +120,7 @@ export default function MenuPage() {
         return { ...category, items };
       })
       .filter((category) => category.items.length > 0);
-  }, [menuCategories, debouncedQuery, activeFilter, showFavoritesOnly, favorites]);
+  }, [sortedCategories, debouncedQuery, activeFilter, showFavoritesOnly, favorites]);
 
   const isSearching = debouncedQuery.trim().length > 0 || activeFilter !== null || showFavoritesOnly;
   const totalResults = filteredCategories.reduce(
@@ -157,7 +186,7 @@ export default function MenuPage() {
         onFilterChange={setActiveFilter}
       />
       <CategoryNav
-        categories={menuCategories}
+        categories={sortedCategories}
         activeCategory={activeCategory}
         onCategoryClick={handleCategoryClick}
         isSearching={isSearching}
@@ -192,7 +221,7 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="space-y-10 sm:space-y-12">
-            {menuCategories.map((category) => (
+            {sortedCategories.map((category) => (
               <MenuSection key={category.id} category={category} />
             ))}
           </div>

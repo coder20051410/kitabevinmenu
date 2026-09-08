@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import CartDrawer from "./CartDrawer";
 
-export default function FloatingCart() {
+export default function FloatingCart({ tableFromQR }: { tableFromQR?: boolean }) {
   const { totalItems } = useCart();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -29,7 +29,7 @@ export default function FloatingCart() {
           </motion.button>
         )}
       </AnimatePresence>
-      <CartDrawer open={open} onClose={() => setOpen(false)} />
+      <CartDrawer open={open} onClose={() => setOpen(false)} tableFromQR={tableFromQR} />
     </>
   );
 }

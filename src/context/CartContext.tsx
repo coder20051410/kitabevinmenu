@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -24,12 +25,25 @@ interface CartContextValue {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  tableNumber: string;
+  setTableNumber: (value: string) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [tableNumber, setTableNumber] = useState("");
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("tableNumber");
+    if (saved) setTableNumber(saved);
+  }, []);
+
+  const setTable = (value: string) => {
+    setTableNumber(value);
+    sessionStorage.setItem("tableNumber", value);
+  };
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -83,6 +97,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
+        tableNumber,
+        setTableNumber: setTable,
       }}
     >
       {children}

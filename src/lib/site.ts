@@ -5,7 +5,7 @@ export const siteConfig = {
   tiktok: "https://www.tiktok.com/@kitabevin_bookcafe",
   mapsUrl: "https://maps.app.goo.gl/xy1aXqeL1x2PvQpJ7",
   phone: "+994 (55) 216 52 62",
-  whatsapp: "994551652162",
+  whatsapp: "994552165262",
   wifiName: "Kitabevin",
   wifiPassword: "Kenan2026!",
 } as const;

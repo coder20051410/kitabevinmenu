@@ -71,8 +71,15 @@ export async function saveOverrides(overrides: MenuOverrides) {
     });
     return;
   }
-  await fs.mkdir(path.dirname(storePath), { recursive: true });
-  await fs.writeFile(storePath, JSON.stringify(overrides, null, 2), "utf8");
+  try {
+    await fs.mkdir(path.dirname(storePath), { recursive: true });
+    await fs.writeFile(storePath, JSON.stringify(overrides, null, 2), "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === "EROFS") {
+      throw new Error("Cannot save menu overrides: read-only filesystem. Please configure BLOB_READ_WRITE_TOKEN or Supabase.");
+    }
+    throw error;
+  }
 }
 
 export async function updateMenu(categories: MenuCategory[]) {

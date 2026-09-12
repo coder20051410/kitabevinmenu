@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       contentType: "image/jpeg",
       allowOverwrite: true,
     });
-    const imageUrl = blob.url;
+    const imageUrl = `${blob.url}?v=${Date.now()}`;
     if (venueType === "hero" || venueType === "gallery") {
       const venue = await getVenueImages();
       await saveVenueImages({ hero: venueType === "hero" ? imageUrl : venue.hero, gallery: venueType === "gallery" ? [...venue.gallery, imageUrl] : venue.gallery });

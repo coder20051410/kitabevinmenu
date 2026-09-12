@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ path: imageUrl });
   } catch (blobError) {
-    console.error("Blob upload error, falling back to local filesystem:", blobError);
+    console.error("Blob upload error, falling back to local filesystem:", JSON.stringify(blobError));
   }
 
   // Fallback to local filesystem (for local development)

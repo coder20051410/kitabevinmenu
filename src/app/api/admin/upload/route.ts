@@ -52,6 +52,13 @@ export async function POST(request: Request) {
     console.error("Blob upload error, falling back to local filesystem:", JSON.stringify(blobError));
   }
 
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      { error: "Vercel Blob-a yükləmək mümkün olmadı. Blob environment dəyişənlərini yoxlayın." },
+      { status: 500 },
+    );
+  }
+
   // Fallback to local filesystem (for local development)
   try {
     const directory = path.join(process.cwd(), "public", "images", subfolder);

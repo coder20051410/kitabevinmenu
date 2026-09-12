@@ -46,6 +46,7 @@ export default function MenuItemImage({
   return (
     <div className={`relative h-36 w-full overflow-hidden rounded-t-xl ${className}`}>
       <Image
+        key={image}
         src={image as string}
         alt={name}
         fill

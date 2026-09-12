@@ -36,6 +36,7 @@ export async function saveVenueImages(images: VenueImages) {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
+      allowOverwrite: true,
     });
     return;
   } catch (blobError) {

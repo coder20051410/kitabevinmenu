@@ -75,6 +75,7 @@ export async function saveOverrides(overrides: MenuOverrides) {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
+      allowOverwrite: true,
     });
     return;
   } catch (blobError) {

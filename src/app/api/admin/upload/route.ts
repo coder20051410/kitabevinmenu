@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       access: "public",
       addRandomSuffix: false,
       contentType: "image/jpeg",
+      allowOverwrite: true,
     });
     const imageUrl = blob.url;
     if (venueType === "hero" || venueType === "gallery") {

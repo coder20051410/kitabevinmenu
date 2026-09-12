@@ -23,7 +23,7 @@ export default function AdminPage() {
         if (value) loadVenueImages();
       });
   }, []);
-      if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
+  async function loadMenu() {
     const response = await fetch("/api/admin/menu");
     if (response.ok) setCategories(await response.json());
   }
@@ -72,8 +72,7 @@ export default function AdminPage() {
         items: category.items.map((item, currentItemIndex) => currentItemIndex !== itemIndex ? item : { ...item, image: result.path }),
       });
       setCategories(updatedCategories);
-      await save(updatedCategories);
-      setMessage("✓ Şəkil yeniləndi");
+      if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
     }
     else setMessage(result.error ?? "Şəkil yüklənmədi");
   }

@@ -32,8 +32,10 @@ export async function POST(request: Request) {
     .jpeg({ quality: 80 })
     .toBuffer();
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    const subfolder = venueType === "hero" || venueType === "gallery" ? "venue" : "menu";
+  const subfolder = venueType === "hero" || venueType === "gallery" ? "venue" : "menu";
+
+  // Try Blob first (OIDC works automatically in Vercel)
+  try {
     const blob = await put(`images/${subfolder}/${filename}`, image, {
       access: "public",
       addRandomSuffix: false,
@@ -45,16 +47,26 @@ export async function POST(request: Request) {
       await saveVenueImages({ hero: venueType === "hero" ? imageUrl : venue.hero, gallery: venueType === "gallery" ? [...venue.gallery, imageUrl] : venue.gallery });
     }
     return NextResponse.json({ path: imageUrl });
+  } catch (blobError) {
+    console.error("Blob upload error, falling back to local filesystem:", blobError);
   }
 
-  const subfolder = venueType === "hero" || venueType === "gallery" ? "venue" : "menu";
-  const directory = path.join(process.cwd(), "public", "images", subfolder);
-  await fs.mkdir(directory, { recursive: true });
-  await fs.writeFile(path.join(directory, filename), image);
-  const imagePath = `/images/${subfolder}/${filename}`;
-  if (venueType === "hero" || venueType === "gallery") {
-    const venue = await getVenueImages();
-    await saveVenueImages({ hero: venueType === "hero" ? imagePath : venue.hero, gallery: venueType === "gallery" ? [...venue.gallery, imagePath] : venue.gallery });
+  // Fallback to local filesystem (for local development)
+  try {
+    const directory = path.join(process.cwd(), "public", "images", subfolder);
+    await fs.mkdir(directory, { recursive: true });
+    await fs.writeFile(path.join(directory, filename), image);
+    const imagePath = `/images/${subfolder}/${filename}`;
+    if (venueType === "hero" || venueType === "gallery") {
+      const venue = await getVenueImages();
+      await saveVenueImages({ hero: venueType === "hero" ? imagePath : venue.hero, gallery: venueType === "gallery" ? [...venue.gallery, imagePath] : venue.gallery });
+    }
+    return NextResponse.json({ path: imagePath });
+  } catch (fsError) {
+    console.error("Local filesystem write error:", fsError);
+    return NextResponse.json(
+      { error: "Failed to upload image. Please check Vercel Blob connection." },
+      { status: 500 }
+    );
   }
-  return NextResponse.json({ path: imagePath });
 }

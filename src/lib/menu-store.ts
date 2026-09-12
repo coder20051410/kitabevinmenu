@@ -12,13 +12,18 @@ export type MenuOverrides = Record<string, {
 const storePath = path.join(process.cwd(), ".data", "menu-overrides.json");
 
 async function readOverrides(): Promise<MenuOverrides> {
+  // Try Blob first (OIDC works automatically in Vercel)
   try {
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const result = await list({ prefix: "menu-overrides.json", limit: 1 });
-      const blob = result.blobs[0];
-      if (!blob) return {};
-      return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as MenuOverrides;
-    }
+    const result = await list({ prefix: "menu-overrides.json", limit: 1 });
+    const blob = result.blobs[0];
+    if (!blob) return {};
+    return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as MenuOverrides;
+  } catch (blobError) {
+    console.error("Blob read error, falling back to local filesystem:", blobError);
+  }
+
+  // Fallback to local filesystem (for local development)
+  try {
     return JSON.parse(await fs.readFile(storePath, "utf8")) as MenuOverrides;
   } catch {
     return {};
@@ -63,20 +68,25 @@ export async function getMenu(): Promise<MenuCategory[]> {
 }
 
 export async function saveOverrides(overrides: MenuOverrides) {
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // Try Blob first (OIDC works automatically in Vercel)
+  try {
     await put("menu-overrides.json", JSON.stringify(overrides, null, 2), {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
     });
     return;
+  } catch (blobError) {
+    console.error("Blob write error, falling back to local filesystem:", blobError);
   }
+
+  // Fallback to local filesystem (for local development)
   try {
     await fs.mkdir(path.dirname(storePath), { recursive: true });
     await fs.writeFile(storePath, JSON.stringify(overrides, null, 2), "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException)?.code === "EROFS") {
-      throw new Error("Cannot save menu overrides: read-only filesystem. Please configure BLOB_READ_WRITE_TOKEN or Supabase.");
+      throw new Error("Cannot save menu overrides: read-only filesystem. Please configure Vercel Blob connection.");
     }
     throw error;
   }

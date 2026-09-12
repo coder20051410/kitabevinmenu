@@ -16,13 +16,14 @@ async function readOverrides(): Promise<MenuOverrides> {
   try {
     const result = await list({ prefix: "menu-overrides.json", limit: 1 });
     const blob = result.blobs[0];
-    if (!blob) return {};
-    return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as MenuOverrides;
+    if (blob) {
+      return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as MenuOverrides;
+    }
   } catch (blobError) {
     console.error("Blob read error, falling back to local filesystem:", blobError);
   }
 
-  // Fallback to local filesystem (for local development)
+  // Fallback to local filesystem (for local development or if Blob is empty)
   try {
     return JSON.parse(await fs.readFile(storePath, "utf8")) as MenuOverrides;
   } catch {

@@ -50,7 +50,7 @@ export default function MenuItemImage({
         src={image as string}
         alt={name}
         fill
-        unoptimized={image?.startsWith("/images/")}
+        unoptimized
         sizes="(max-width: 640px) 100vw, 400px"
         className="object-cover transition-transform duration-300 group-hover:scale-105"
         placeholder="blur"

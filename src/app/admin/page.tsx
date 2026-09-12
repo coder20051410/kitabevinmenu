@@ -23,8 +23,7 @@ export default function AdminPage() {
         if (value) loadVenueImages();
       });
   }, []);
-
-  async function loadMenu() {
+      if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
     const response = await fetch("/api/admin/menu");
     if (response.ok) setCategories(await response.json());
   }
@@ -90,7 +89,7 @@ export default function AdminPage() {
     setMessage("✓ Məkan şəkli yeniləndi");
   }
 
-  async function save(nextCategories = categories) {
+  async function save(nextCategories = categories): Promise<boolean> {
     setSaving(true);
     setMessage("");
     const response = await fetch("/api/admin/menu", {
@@ -102,10 +101,11 @@ export default function AdminPage() {
     setSaving(false);
     if (!response.ok) {
       setMessage(result?.error ?? "Yadda saxlamaq alınmadı");
-      return;
+      return false;
     }
     if (Array.isArray(result)) setCategories(result);
     setMessage("Dəyişikliklər yadda saxlanıldı");
+    return true;
   }
 
   async function logout() {

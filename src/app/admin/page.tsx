@@ -87,8 +87,8 @@ export default function AdminPage() {
   }
 
   async function uploadImage(categoryIndex: number, itemIndex: number, file: File) {
-    if (file.size > 4 * 1024 * 1024) {
-      setMessage("Şəkil 4 MB-dan böyük ola bilməz");
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage("Şəkil 10 MB-dan böyük ola bilməz");
       return;
     }
 
@@ -126,8 +126,8 @@ export default function AdminPage() {
   }
 
   async function uploadVenueImage(type: "hero" | "gallery", file: File) {
-    if (file.size > 4 * 1024 * 1024) {
-      setMessage("Şəkil 4 MB-dan böyük ola bilməz");
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage("Şəkil 10 MB-dan böyük ola bilməz");
       return;
     }
 

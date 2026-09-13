@@ -13,8 +13,17 @@
     background-size: 7px 7px;
   }
 
+  .dark body {
+    @apply bg-dark-bg text-dark-text;
+    background-image: radial-gradient(rgba(212, 168, 87, 0.03) 0.7px, transparent 0.7px);
+  }
+
   ::selection {
     @apply bg-accent/20 text-coffee;
+  }
+
+  .dark ::selection {
+    @apply bg-gold/20 text-dark-text;
   }
 
   button,
@@ -25,6 +34,12 @@
   button:active,
   a:active {
     transform: scale(0.98);
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 }
 

@@ -15,6 +15,8 @@ import Footer from "./Footer";
 import FilterChips, { type FilterKey } from "./FilterChips";
 import Gallery from "./Gallery";
 import TimeBanner from "./TimeBanner";
+import WhatsAppButton from "./WhatsAppButton";
+import FloatingCart from "./FloatingCart";
 
 const Header = dynamic(() => import("./Header"), {
   ssr: false,
@@ -200,6 +202,8 @@ export default function MenuPage() {
       </main>
 
       <Footer />
+      <WhatsAppButton />
+      <FloatingCart />
     </div>
   );
 }

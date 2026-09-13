@@ -33,11 +33,13 @@ export async function POST(request: Request) {
     .toBuffer();
 
   const subfolder = venueType === "hero" || venueType === "gallery" ? "venue" : "menu";
+  let blobErrorMessage = "unknown Blob error";
 
   // Try Blob first (OIDC works automatically in Vercel)
   try {
     const blob = await put(`images/${subfolder}/${filename}`, image, {
       access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
       contentType: "image/jpeg",
       allowOverwrite: true,
@@ -49,12 +51,13 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ path: imageUrl });
   } catch (blobError) {
-    console.error("Blob upload error, falling back to local filesystem:", JSON.stringify(blobError));
+    blobErrorMessage = blobError instanceof Error ? blobError.message : String(blobError);
+    console.error("Blob upload error, falling back to local filesystem:", blobErrorMessage);
   }
 
   if (process.env.VERCEL) {
     return NextResponse.json(
-      { error: "Vercel Blob-a yükləmək mümkün olmadı. Blob environment dəyişənlərini yoxlayın." },
+      { error: `Vercel Blob-a yükləmək mümkün olmadı: ${blobErrorMessage}` },
       { status: 500 },
     );
   }

@@ -14,7 +14,7 @@ const storePath = path.join(process.cwd(), ".data", "menu-overrides.json");
 async function readOverrides(): Promise<MenuOverrides> {
   // Try Blob first (OIDC works automatically in Vercel)
   try {
-    const result = await list({ prefix: "menu-overrides.json", limit: 1 });
+    const result = await list({ prefix: "menu-overrides.json", limit: 1, token: process.env.BLOB_READ_WRITE_TOKEN });
     const blob = result.blobs[0];
     if (blob) {
       return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as MenuOverrides;
@@ -73,6 +73,7 @@ export async function saveOverrides(overrides: MenuOverrides) {
   try {
     await put("menu-overrides.json", JSON.stringify(overrides, null, 2), {
       access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
       contentType: "application/json",
       allowOverwrite: true,

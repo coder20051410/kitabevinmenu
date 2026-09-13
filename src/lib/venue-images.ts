@@ -13,7 +13,7 @@ const emptyVenue: VenueImages = { gallery: [] };
 export async function getVenueImages(): Promise<VenueImages> {
   // Try Blob first (OIDC works automatically in Vercel)
   try {
-    const result = await list({ prefix: "venue-images.json", limit: 1 });
+    const result = await list({ prefix: "venue-images.json", limit: 1, token: process.env.BLOB_READ_WRITE_TOKEN });
     const blob = result.blobs[0];
     if (!blob) return emptyVenue;
     return (await fetch(blob.url, { cache: "no-store" }).then((response) => response.json())) as VenueImages;
@@ -34,6 +34,7 @@ export async function saveVenueImages(images: VenueImages) {
   try {
     await put("venue-images.json", JSON.stringify(images, null, 2), {
       access: "public",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
       contentType: "application/json",
       allowOverwrite: true,

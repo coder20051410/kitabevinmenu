@@ -13,9 +13,6 @@ export async function POST(request: Request) {
   if (!(file instanceof File) || !file.type.startsWith("image/")) {
     return NextResponse.json({ error: "Yalnız şəkil faylı yükləyin" }, { status: 400 });
   }
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ error: "Şəkil 10 MB-dan böyük ola bilməz" }, { status: 400 });
-  }
   const formName = formData.get("name");
   const categoryId = formData.get("categoryId");
   const venueType = formData.get("venueType");

@@ -87,11 +87,6 @@ export default function AdminPage() {
   }
 
   async function uploadImage(categoryIndex: number, itemIndex: number, file: File) {
-    if (file.size > 10 * 1024 * 1024) {
-      setMessage("Şəkil 10 MB-dan böyük ola bilməz");
-      return;
-    }
-
     try {
       const compressedFile = await compressImage(file);
       const controller = new AbortController();
@@ -126,11 +121,6 @@ export default function AdminPage() {
   }
 
   async function uploadVenueImage(type: "hero" | "gallery", file: File) {
-    if (file.size > 10 * 1024 * 1024) {
-      setMessage("Şəkil 10 MB-dan böyük ola bilməz");
-      return;
-    }
-
     try {
       const compressedFile = await compressImage(file);
       const controller = new AbortController();

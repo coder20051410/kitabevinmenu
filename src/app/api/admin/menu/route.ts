@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getMenu, updateMenu } from "@/lib/menu-store";
+import { getMenu, saveMenu } from "@/lib/menu-store";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Məhsul adı boş və qiymət mənfi ola bilməz" }, { status: 400 });
   }
   try {
-    await updateMenu(categories);
+    await saveMenu(categories);
+    revalidatePath("/");
+    revalidatePath("/admin");
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Menyu yadda saxlanmadı" }, { status: 500 });
   }

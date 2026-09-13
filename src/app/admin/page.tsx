@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { LogOut, Save, Upload } from "lucide-react";
+import { LogOut, Save, Upload, Loader2 } from "lucide-react";
+import imageCompression from "browser-image-compression";
 import type { MenuCategory } from "@/data/menu";
 
 export default function AdminPage() {
@@ -13,6 +14,10 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [venueImages, setVenueImages] = useState<{ hero?: string; gallery: string[] }>({ gallery: [] });
+  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [itemPreviews, setItemPreviews] = useState<Record<string, string | null>>({});
+  const [itemUploading, setItemUploading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch("/api/admin/session")
@@ -23,6 +28,7 @@ export default function AdminPage() {
         if (value) loadVenueImages();
       });
   }, []);
+
   async function loadMenu() {
     const response = await fetch("/api/admin/menu");
     if (response.ok) setCategories(await response.json());
@@ -60,92 +66,112 @@ export default function AdminPage() {
   }
 
   async function compressImage(file: File): Promise<File> {
-    return new Promise((resolve, reject) => {
-      const img = document.createElement("img");
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("Canvas context not available"));
-
-      img.onload = () => {
-        const maxWidth = 1200;
-        const scale = Math.min(1, maxWidth / img.width);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return reject(new Error("Compression failed"));
-            resolve(new File([blob], file.name, { type: "image/jpeg" }));
-          },
-          "image/jpeg",
-          0.82
-        );
-      };
-      img.onerror = () => reject(new Error("Image load failed"));
-      img.src = URL.createObjectURL(file);
+    return await imageCompression(file, {
+      maxSizeMB: 2,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+      fileType: "image/webp",
     });
   }
 
-  async function uploadImage(categoryIndex: number, itemIndex: number, file: File) {
+  async function uploadVenueImage(type: "hero" | "gallery", file: File) {
+    if (type === "hero") {
+      setHeroUploading(true);
+      setHeroPreview(URL.createObjectURL(file));
+    }
+
     try {
+      setMessage("Şəkil hazırlanır...");
       const compressedFile = await compressImage(file);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      setMessage("Yüklənir...");
 
-      const data = new FormData();
-      data.append("file", compressedFile);
-      data.append("name", categories[categoryIndex].items[itemIndex].name);
-      data.append("categoryId", categories[categoryIndex].id);
+      const formData = new FormData();
+      formData.append("file", compressedFile);
+      formData.append("type", type);
+      if (type === "hero" && venueImages.hero) {
+        formData.append("oldUrl", venueImages.hero);
+      }
 
-      const response = await fetch("/api/admin/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
-        body: data,
-        signal: controller.signal,
+        body: formData,
       });
-      clearTimeout(timeoutId);
 
       const result = await response.json();
-      if (response.ok) {
-        const updatedCategories = categories.map((category, currentCategoryIndex) => currentCategoryIndex !== categoryIndex ? category : {
-          ...category,
-          items: category.items.map((item, currentItemIndex) => currentItemIndex !== itemIndex ? item : { ...item, image: result.path }),
-        });
-        setCategories(updatedCategories);
-        if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
-      } else {
-        setMessage(result.error ?? "Şəkil yüklənmədi");
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Yükləmə zamanı xəta baş verdi");
       }
+
+      if (type === "hero") {
+        setVenueImages((current) => ({ ...current, hero: result.url }));
+        setHeroPreview(null);
+        setMessage("✓ Hero şəkli uğurla yükləndi");
+      } else {
+        setVenueImages((current) => ({ ...current, gallery: [...current.gallery, result.url] }));
+        setMessage("✓ Qalereya şəkli uğurla yükləndi");
+      }
+
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage(error instanceof Error && error.name === "AbortError" ? "Şəkil yüklənmədi: vaxt bitdi" : "Şəkil yüklənmədi: xəta baş verdi");
+      setHeroPreview(null);
+      setMessage(error instanceof Error ? error.message : "Yükləmə zamanı xəta baş verdi, yenidən cəhd edin");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      setHeroUploading(false);
     }
   }
 
-  async function uploadVenueImage(type: "hero" | "gallery", file: File) {
+  async function uploadItemImage(categoryIndex: number, itemIndex: number, file: File) {
+    const itemKey = `${categoryIndex}-${itemIndex}`;
+    setItemUploading((prev) => ({ ...prev, [itemKey]: true }));
+    setItemPreviews((prev) => ({ ...prev, [itemKey]: URL.createObjectURL(file) }));
+
     try {
+      setMessage("Şəkil hazırlanır...");
       const compressedFile = await compressImage(file);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      setMessage("Yüklənir...");
 
-      const data = new FormData();
-      data.append("file", compressedFile);
-      data.append("venueType", type);
+      const formData = new FormData();
+      formData.append("file", compressedFile);
+      formData.append("type", "menu-item");
+      const oldUrl = categories[categoryIndex].items[itemIndex].image;
+      if (oldUrl) {
+        formData.append("oldUrl", oldUrl);
+      }
 
-      const response = await fetch("/api/admin/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
-        body: data,
-        signal: controller.signal,
+        body: formData,
       });
-      clearTimeout(timeoutId);
 
       const result = await response.json();
-      if (!response.ok) {
-        setMessage(result.error ?? "Şəkil yüklənmədi");
-        return;
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Yükləmə zamanı xəta baş verdi");
       }
-      setVenueImages((current) => type === "hero" ? { ...current, hero: result.path } : { ...current, gallery: [...current.gallery, result.path] });
-      setMessage("✓ Məkan şəkli yeniləndi");
+
+      const updatedCategories = categories.map((category, catIndex) =>
+        catIndex !== categoryIndex
+          ? category
+          : {
+              ...category,
+              items: category.items.map((item, itmIndex) =>
+                itmIndex !== itemIndex ? item : { ...item, image: result.url }
+              ),
+            }
+      );
+
+      setCategories(updatedCategories);
+      setItemPreviews((prev) => ({ ...prev, [itemKey]: result.url }));
+      setMessage("✓ Şəkil uğurla yükləndi");
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
-      setMessage(error instanceof Error && error.name === "AbortError" ? "Şəkil yüklənmədi: vaxt bitdi" : "Şəkil yüklənmədi: xəta baş verdi");
+      setItemPreviews((prev) => ({ ...prev, [itemKey]: null }));
+      setMessage(error instanceof Error ? error.message : "Yükləmə zamanı xəta baş verdi, yenidən cəhd edin");
+      setTimeout(() => setMessage(""), 3000);
+    } finally {
+      setItemUploading((prev) => ({ ...prev, [itemKey]: false }));
     }
   }
 
@@ -208,13 +234,22 @@ export default function AdminPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-dashed border-[#cbb9a6] p-4 dark:border-dark-border">
               <p className="mb-3 text-sm font-semibold">Hero fon şəkli</p>
-              {venueImages.hero && <div className="relative mb-3 h-32 overflow-hidden rounded-lg"><Image src={venueImages.hero} alt="Hero" fill sizes="500px" className="object-cover" unoptimized /></div>}
-              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg bg-[#3f3026] px-4 py-2 text-sm font-semibold text-white dark:bg-gold dark:text-dark-bg"><Upload size={15} />Şəkli dəyiş<input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadVenueImage("hero", file); }} /></label>
+              {(heroPreview || venueImages.hero) && (
+                <div className="relative mb-3 h-32 w-full overflow-hidden rounded-lg">
+                  <Image src={heroPreview || venueImages.hero!} alt="Hero" fill sizes="500px" className="object-cover" unoptimized />
+                </div>
+              )}
+              <label className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${heroUploading ? "bg-gray-400 text-gray-600 cursor-not-allowed" : "bg-[#3f3026] text-white dark:bg-gold dark:text-dark-bg"}`}>
+                {heroUploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+                {heroUploading ? "Yüklənir..." : "Şəkli dəyiş"}
+                <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" className="hidden" disabled={heroUploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadVenueImage("hero", file); }} />
+              </label>
+              <p className="mt-2 text-xs text-gray-500">JPG, PNG, WEBP, GIF dəstəklənir</p>
             </div>
             <div className="rounded-xl border border-dashed border-[#cbb9a6] p-4 dark:border-dark-border">
               <p className="mb-3 text-sm font-semibold">Qalereya şəkilləri</p>
               <div className="mb-3 grid grid-cols-4 gap-2">{venueImages.gallery.map((image) => <div key={image} className="relative aspect-square overflow-hidden rounded-md"><Image src={image} alt="Məkan" fill sizes="120px" className="object-cover" unoptimized /></div>)}</div>
-              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-[#cbb9a6] px-4 py-2 text-sm font-semibold dark:border-dark-border dark:text-dark-text"><Upload size={15} />Şəkil əlavə et<input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadVenueImage("gallery", file); }} /></label>
+              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-[#cbb9a6] px-4 py-2 text-sm font-semibold dark:border-dark-border dark:text-dark-text"><Upload size={15} />Şəkil əlavə et<input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadVenueImage("gallery", file); }} /></label>
             </div>
           </div>
         </section>
@@ -227,9 +262,26 @@ export default function AdminPage() {
             <div className="grid gap-3 lg:grid-cols-2">
               {category.items.map((item) => {
                 const itemIndex = categories[categoryIndex].items.findIndex((currentItem) => currentItem.name === item.name);
+                const itemKey = `${categoryIndex}-${itemIndex}`;
+                const isUploading = itemUploading[itemKey];
+                const previewUrl = itemPreviews[itemKey] || item.image;
                 return (
                 <div key={`${category.id}-${itemIndex}`} className="grid gap-2 rounded-xl border border-[#eadfd2] p-3 sm:grid-cols-[1fr_110px] dark:border-dark-border">
-                  <div className="space-y-2"><div className="flex items-center gap-3"><div className="relative h-12 w-16 overflow-hidden rounded-md bg-[#f4efe5] dark:bg-dark-bg"><Image src={item.image || "/logo.png"} alt="" fill sizes="64px" unoptimized className="object-cover" /></div><input value={item.name} onChange={(event) => updateItem(categoryIndex, itemIndex, "name", event.target.value)} className="w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-sm font-semibold outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" /></div><input value={item.image ?? ""} onChange={(event) => updateItem(categoryIndex, itemIndex, "image", event.target.value)} placeholder="Şəkil yolu və ya URL" className="w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-xs outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" /><label className="flex w-fit cursor-pointer items-center gap-2 text-xs font-semibold text-[#9a6b3f] dark:text-gold"><Upload size={14} />Şəkli dəyiş<input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadImage(categoryIndex, itemIndex, file); }} /></label></div><label className="text-xs font-semibold text-[#765b49] dark:text-dark-text-muted">Qiymət (AZN)<input type="number" min="0" step="0.1" value={item.price} onChange={(event) => updateItem(categoryIndex, itemIndex, "price", event.target.value)} className="mt-2 w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-sm outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" /></label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-16 overflow-hidden rounded-md bg-[#f4efe5] dark:bg-dark-bg">
+                        <Image src={previewUrl || "/logo.png"} alt="" fill sizes="64px" unoptimized className="object-cover" />
+                      </div>
+                      <input value={item.name} onChange={(event) => updateItem(categoryIndex, itemIndex, "name", event.target.value)} className="w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-sm font-semibold outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" />
+                    </div>
+                    <input value={item.image ?? ""} onChange={(event) => updateItem(categoryIndex, itemIndex, "image", event.target.value)} placeholder="Şəkil yolu və ya URL" className="w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-xs outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" />
+                    <label className={`flex w-fit cursor-pointer items-center gap-2 text-xs font-semibold ${isUploading ? "text-gray-400 cursor-not-allowed" : "text-[#9a6b3f] dark:text-gold"}`}>
+                      {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                      {isUploading ? "Yüklənir..." : "Şəkli dəyiş"}
+                      <input type="file" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" className="hidden" disabled={isUploading} onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadItemImage(categoryIndex, itemIndex, file); }} />
+                    </label>
+                  </div>
+                  <label className="text-xs font-semibold text-[#765b49] dark:text-dark-text-muted">Qiymət (AZN)<input type="number" min="0" step="0.1" value={item.price} onChange={(event) => updateItem(categoryIndex, itemIndex, "price", event.target.value)} className="mt-2 w-full rounded-md border border-[#d9cbbb] px-3 py-2 text-sm outline-none focus:border-[#9a6b3f] dark:border-dark-border dark:bg-dark-bg dark:text-dark-text" /></label>
                 </div>
                 );
               })}

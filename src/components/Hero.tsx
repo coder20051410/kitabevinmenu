@@ -14,7 +14,7 @@ export default function Hero({ image }: { image?: string }) {
 
   return (
     <section className="relative min-h-[540px] overflow-hidden border-b border-card-border/50 bg-gradient-to-b from-[#5a3929] to-[#241813] px-4 py-16 sm:px-6 sm:py-24">
-      {image && <motion.div style={{ y }}><Image src={image} alt="Kitab Evin Bookcafe" fill priority sizes="100vw" className="object-cover" unoptimized={image.startsWith("/")} /></motion.div>}
+      {image && <motion.div style={{ y }}><Image src={image} alt="Kitab Evin Bookcafe" fill priority sizes="100vw" className="object-cover" unoptimized /></motion.div>}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#21130f] via-[#21130f]/60 to-[#21130f]/20" />
 
       <motion.div

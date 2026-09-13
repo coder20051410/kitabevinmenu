@@ -6,9 +6,10 @@ import {
   BLUR_DATA_URL,
   getCategoryEmoji,
   getCategoryGradient,
+  getUnsplashUrl,
 } from "@/lib/images";
 
-type ImageStage = "image" | "emoji";
+type ImageStage = "image" | "fallback" | "emoji";
 
 interface MenuItemImageProps {
   name: string;
@@ -26,6 +27,7 @@ export default function MenuItemImage({
   const [stage, setStage] = useState<ImageStage>(image ? "image" : "emoji");
   const emoji = getCategoryEmoji(categoryId);
   const gradient = getCategoryGradient(categoryId);
+  const fallback = getUnsplashUrl(categoryId, `${categoryId}-${name}`);
 
   useEffect(() => {
     setStage(image ? "image" : "emoji");
@@ -46,8 +48,8 @@ export default function MenuItemImage({
   return (
     <div className={`relative h-36 w-full overflow-hidden rounded-t-xl ${className}`}>
       <Image
-        key={image}
-        src={image as string}
+        key={`${stage}-${image}`}
+        src={stage === "fallback" ? fallback : image as string}
         alt={name}
         fill
         unoptimized
@@ -57,7 +59,7 @@ export default function MenuItemImage({
         blurDataURL={BLUR_DATA_URL}
         loading="lazy"
         onError={() => {
-          setStage("emoji");
+          setStage((currentStage) => currentStage === "image" ? "fallback" : "emoji");
         }}
       />
     </div>

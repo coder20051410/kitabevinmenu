@@ -59,33 +59,104 @@ export default function AdminPage() {
     }));
   }
 
+  async function compressImage(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement("img");
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas context not available"));
+
+      img.onload = () => {
+        const maxWidth = 1200;
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Compression failed"));
+            resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          },
+          "image/jpeg",
+          0.82
+        );
+      };
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   async function uploadImage(categoryIndex: number, itemIndex: number, file: File) {
-    const data = new FormData();
-    data.append("file", file);
-    data.append("name", categories[categoryIndex].items[itemIndex].name);
-    data.append("categoryId", categories[categoryIndex].id);
-    const response = await fetch("/api/admin/upload", { method: "POST", body: data });
-    const result = await response.json();
-    if (response.ok) {
-      const updatedCategories = categories.map((category, currentCategoryIndex) => currentCategoryIndex !== categoryIndex ? category : {
-        ...category,
-        items: category.items.map((item, currentItemIndex) => currentItemIndex !== itemIndex ? item : { ...item, image: result.path }),
-      });
-      setCategories(updatedCategories);
-      if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
+    if (file.size > 4 * 1024 * 1024) {
+      setMessage("Şəkil 4 MB-dan böyük ola bilməz");
+      return;
     }
-    else setMessage(result.error ?? "Şəkil yüklənmədi");
+
+    try {
+      const compressedFile = await compressImage(file);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      const data = new FormData();
+      data.append("file", compressedFile);
+      data.append("name", categories[categoryIndex].items[itemIndex].name);
+      data.append("categoryId", categories[categoryIndex].id);
+
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: data,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const result = await response.json();
+      if (response.ok) {
+        const updatedCategories = categories.map((category, currentCategoryIndex) => currentCategoryIndex !== categoryIndex ? category : {
+          ...category,
+          items: category.items.map((item, currentItemIndex) => currentItemIndex !== itemIndex ? item : { ...item, image: result.path }),
+        });
+        setCategories(updatedCategories);
+        if (await save(updatedCategories)) setMessage("✓ Şəkil yeniləndi");
+      } else {
+        setMessage(result.error ?? "Şəkil yüklənmədi");
+      }
+    } catch (error) {
+      setMessage(error instanceof Error && error.name === "AbortError" ? "Şəkil yüklənmədi: vaxt bitdi" : "Şəkil yüklənmədi: xəta baş verdi");
+    }
   }
 
   async function uploadVenueImage(type: "hero" | "gallery", file: File) {
-    const data = new FormData();
-    data.append("file", file);
-    data.append("venueType", type);
-    const response = await fetch("/api/admin/upload", { method: "POST", body: data });
-    const result = await response.json();
-    if (!response.ok) { setMessage(result.error ?? "Şəkil yüklənmədi"); return; }
-    setVenueImages((current) => type === "hero" ? { ...current, hero: result.path } : { ...current, gallery: [...current.gallery, result.path] });
-    setMessage("✓ Məkan şəkli yeniləndi");
+    if (file.size > 4 * 1024 * 1024) {
+      setMessage("Şəkil 4 MB-dan böyük ola bilməz");
+      return;
+    }
+
+    try {
+      const compressedFile = await compressImage(file);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      const data = new FormData();
+      data.append("file", compressedFile);
+      data.append("venueType", type);
+
+      const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: data,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const result = await response.json();
+      if (!response.ok) {
+        setMessage(result.error ?? "Şəkil yüklənmədi");
+        return;
+      }
+      setVenueImages((current) => type === "hero" ? { ...current, hero: result.path } : { ...current, gallery: [...current.gallery, result.path] });
+      setMessage("✓ Məkan şəkli yeniləndi");
+    } catch (error) {
+      setMessage(error instanceof Error && error.name === "AbortError" ? "Şəkil yüklənmədi: vaxt bitdi" : "Şəkil yüklənmədi: xəta baş verdi");
+    }
   }
 
   async function save(nextCategories = categories): Promise<boolean> {

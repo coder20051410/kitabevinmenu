@@ -48,7 +48,7 @@ export default function MenuItemImage({
   return (
     <div className={`relative h-36 w-full overflow-hidden rounded-t-xl ${className}`}>
       <Image
-        key={`${stage}-${image}`}
+        key={image || stage}
         src={stage === "fallback" ? fallback : image as string}
         alt={name}
         fill

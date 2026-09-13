@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const blob = await put(`images/${subfolder}/${filename}`, image, {
       access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      token: process.env.BLOB_READ_WRITE_TOKEN || undefined,
       addRandomSuffix: false,
       contentType: "image/jpeg",
       allowOverwrite: true,
